@@ -1,0 +1,67 @@
+import React from 'react';
+import { Router, Route, Link } from 'react-router-dom';
+import { history } from './_helpers/history';
+import { authenticationService } from './_services';
+import { PrivateRoute } from './PrivateRoute';
+// import { HomePage } from '@/HomePage';
+import { SignIn } from './components/sign-in';
+import ViewStudents from './components/Home';
+import AddStudents from './components/add-students';
+import SignUp from './components/sign-up';
+
+export default class App extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            currentUser: null,
+        };
+    }
+
+    componentDidMount() {
+        console.log("INTO")
+        // authenticationService.currentUser && this.setState({ currentUser: authenticationService.currentUser });
+        authenticationService.currentUser.subscribe(x => this.setState({ currentUser: x }));
+        this.intervalId = setInterval(authenticationService.logout(), 100);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.intervalId);
+    }
+
+    logout() {
+        authenticationService.logout();
+        history.push('/login');
+    }
+
+    render() {
+        const { currentUser } = this.state;
+        return (
+            <Router history={history}>
+                <div>
+                    {currentUser &&
+                        <nav className="navbar navbar-expand navbar-dark bg-dark">
+                            <div className="navbar-nav">
+                                <Link to="/" className="nav-item nav-link">View Students</Link>
+                                <Link to="/add" onClick={() => history.push('/add')} className="nav-item nav-link">Add Students</Link>
+                                <a onClick={this.logout} className="nav-item nav-link">Logout</a>
+                            </div>
+                        </nav>
+                    }
+                    <div className="jumbotron">
+                        <div className="container">
+                            <div className="row">
+                                <div className="col-md-6 offset-md-3">
+                                    <PrivateRoute exact path="/" component={ViewStudents} />
+                                    <Route path="/login" component={SignIn} />
+                                    <Route path="/add" component={AddStudents} />
+                                    <Route path="/signup" component={SignUp} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Router>
+        );
+    }
+}
